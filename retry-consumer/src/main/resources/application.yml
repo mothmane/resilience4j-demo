@@ -1,0 +1,19 @@
+server:
+  port: 8082
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+producer:
+  url: http://localhost:8081
+
+
+resilience4j.retry:
+  instances:
+    unstableService:
+      maxAttempts: 5
+      waitDuration: 100
+      enableExponentialBackoff: true
+      exponentialBackoffMultiplier: 2
+
