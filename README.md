@@ -80,7 +80,7 @@ NB : you can use a _resilience4j-all_ that envelopes all core modules
 We will start by creating a spring boot 2 application that mimics an unstable producer, 
 We will skip the details of the configuration since Sprint boot is outside this article scope
 
-Here is the unstable endpoint. 
+Here is the unstable endpoint.
 
 ```java
 
@@ -99,7 +99,7 @@ public class UnstableController {
     return Mono.just(new Product("TV",350.00));
   }
   
-  private Logger logger = LoggerFactory.getLogger("UNSTABLE PRODUCER");
+  private final Logger logger = LoggerFactory.getLogger("UNSTABLE PRODUCER");
 }
 ```
 This endpoint will fail 1/5 times,
@@ -140,10 +140,56 @@ and this will prevent our consumer from cascading failure.
 
 NB: resilience4j offers much more configuration options, 
 we can configure a retry based on some result or exception predicate
-we can configure a waiting interval function,
+we can configure a waiting interval function
 
+## Demo code 
+
+you can download the code using this url : https://github.com/mothmane/resilience4j-demo/archive/refs/heads/main.zip
+
+or clone  the projet using the below command 
+
+```bash
+git clone https://github.com/mothmane/resilience4j-demo.git
+```
+
+The demo project is composed of two maven modules, _producer_ and _retry-consumer_, eash one is a ready to use spring boot application
+
+## build the project 
+
+you can use below command to build the project
+
+```bash
+./mvnw clean package
+```
+## producer code
+
+the producer app is a simple spring boot webflux project exposing  **_/unstable_** endpoint 
+this endpoint has an  average failure of 20%,
+
+```java
+
+@RestController
+public class UnstableController {
+
+  public static final int BOUND = 5;
+
+  @GetMapping("/unstable")
+  public Mono<Product> unstable() throws Exception {
+    logger.info("unstable endpoint called");
+    if(new Random().nextInt(BOUND)==1){
+      logger.error("unstable endpoint called returning Exception");
+      throw new Exception("oups something bad has happend");
+    }
+    return Mono.just(new Product("TV",350.00));
+  }
+
+  private final Logger logger = LoggerFactory.getLogger("PRODUCER");
+}
+```
 ## retry consumer code
+
 ### retry consumer pom.xml
+to add resilience4j  to our consumer app we will need the following mavne configuration 
 ```xml
  <properties>
   <resilience4j-spring-boot2.version>1.7.1</resilience4j-spring-boot2.version>
@@ -172,6 +218,9 @@ we can configure a waiting interval function,
     </dependency>
 ```
 ### retry consumer application.yaml config
+
+resilience4j is configured in spring boot application properties files below is the configuration used in this demo
+
 ```yml
 resilience4j.retry:
   instances:
@@ -182,6 +231,12 @@ resilience4j.retry:
       exponentialBackoffMultiplier: 2
 ```
 ### retry consumer client code
+in below code we have a simple client that do not implement retry, 
+and the other annotated with **_Retry_** annotation, the resilience4j retry annotation, have two properties, 
+name that is valued with unstableService  the instance name in application yaml file.
+and fallbackMethod wish take a method name that will be used as fall back in case the retry pattern do not work and the service after all retries still return errors, 
+the value of the fall back method returned.
+
 ```java
 
 @Service
@@ -210,12 +265,14 @@ public class UnstableClient {
 
 }
 ```
+below a simple controller for the two clients
+
 ```java
 
 @RestController
 public class ConsumerController {
 
-  private UnstableClient unstableClient;
+  private final UnstableClient unstableClient;
 
   public ConsumerController(UnstableClient unstableClient) {
     this.unstableClient = unstableClient;
@@ -233,12 +290,24 @@ public class ConsumerController {
 }
 
 ```
-## Demo
-now that we have two application producer and retry-consumer 
+## Run Demo
+
 we will start the producer  
 
+Using your favorite IDE you can import the project and start it,
+
+the producer app will run on port 8081
+and the retry-consumer on 8082
+
+or use the following commands
+
+```bash
+java -jar producer/target/producer-0.0.1-SNAPSHOT.jar
 ```
 
+the logs should look like this 
+
+```
 .   ____          _            __ _ _
 /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
 ( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
@@ -269,11 +338,16 @@ and the consumer app
 2021-12-15 00:25:48.984  INFO 19026 --- [           main] o.s.b.web.embedded.netty.NettyWebServer  : Netty started on port 8082
 2021-12-15 00:25:48.997  INFO 19026 --- [           main] demo.RetryConsumerApplication            : Started RetryConsumerApplication in 2.714 seconds (JVM running for 3.234)
 ```
-et now let use apache bench to get some stats about the producer unstable endpoint for this you need to run this command 
+
+
+et now let use apache bench to get some stats about the producer unstable endpoint, for this you need to run this command 
+
 ```bash
-ab -n 100  http://localhost:8082/unstable-client
+ab -n 100 -c 1 http://localhost:8082/unstable-client
 ```
+
 result 
+
 ```bash
 
 Complete requests:      100
@@ -282,12 +356,16 @@ Failed requests:        36
 Non-2xx responses:      36
 
 ```
+the apache bench shows that 36 request has failed the error propagated from producer api to non protected client causing it tto fail each time the produced has failed.
+
 let's now use the protected endpoint 
 
 ```bash
 ab -n 100 -c 1 http://localhost:8082/unstable-with-retry-client
 ```
-resutl 
+
+result 
+
 ```bash
 
 Complete requests:      100
@@ -295,9 +373,10 @@ Failed requests:        0
 
 ```
 
-It's clear that the error did not propagate to our consumer and in a real context to the rest of the system.
+It's clear that the error did not propagate to our consumer the retry pattern protected our system from cascading failures.
 
-Conclusion : 
+
+## Conclusion : 
 
 in this article we learned about transient failure, we learned basic configuration options for retry pattern and we demonstrated how this pattern prevent from cascading failure.
 In the next article we will lezrn about another type of resiliency pattern wih is the Bulkhead.

@@ -18,11 +18,11 @@ public class UnstableController {
     logger.info("unstable endpoint called");
     if(new Random().nextInt(BOUND)==1){
       logger.error("unstable endpoint called returning Exception");
-      throw new Exception("oups ");
+      throw new Exception("oups something bad has happend");
     }
     return Mono.just(new Product("TV",350.00));
   }
 
-  private Logger logger = LoggerFactory.getLogger("PRODUCER");
+  private final Logger logger = LoggerFactory.getLogger("PRODUCER");
 }
 

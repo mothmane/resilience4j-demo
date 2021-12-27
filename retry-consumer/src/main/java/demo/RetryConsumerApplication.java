@@ -9,7 +9,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 @SpringBootApplication
 public class RetryConsumerApplication {
 
-
   public static void main(String[] args) {
     SpringApplication.run(RetryConsumerApplication.class, args);
   }

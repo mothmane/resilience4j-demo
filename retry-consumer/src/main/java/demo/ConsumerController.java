@@ -7,7 +7,7 @@ import reactor.core.publisher.Mono;
 @RestController
 public class ConsumerController {
 
-  private UnstableClient unstableClient;
+  private final UnstableClient unstableClient;
 
   public ConsumerController(UnstableClient unstableClient) {
     this.unstableClient = unstableClient;
