@@ -163,8 +163,8 @@ you can use below command to build the project
 ```
 ## producer code
 
-the producer app is a simple spring boot webflux project exposing  **_/unstable_** endpoint 
-this endpoint has an  average failure of 20%,
+the producer app is a simple spring boot webflux project exposing  **_/unstable_** endpoint,
+this endpoint has an  average failure of 20%
 
 ```java
 
@@ -189,7 +189,7 @@ public class UnstableController {
 ## retry consumer code
 
 ### retry consumer pom.xml
-to add resilience4j  to our consumer app we will need the following mavne configuration 
+to add resilience4j  to our consumer app we will need the following maven configuration 
 ```xml
  <properties>
   <resilience4j-spring-boot2.version>1.7.1</resilience4j-spring-boot2.version>
@@ -219,7 +219,7 @@ to add resilience4j  to our consumer app we will need the following mavne config
 ```
 ### retry consumer application.yaml config
 
-resilience4j is configured in spring boot application properties files below is the configuration used in this demo
+resilience4j is configured in spring boot application properties files, below is the configuration used in this demo
 
 ```yml
 resilience4j.retry:
@@ -231,6 +231,7 @@ resilience4j.retry:
       exponentialBackoffMultiplier: 2
 ```
 ### retry consumer client code
+
 in below code we have a simple client that do not implement retry, 
 and the other annotated with **_Retry_** annotation, the resilience4j retry annotation, have two properties, 
 name that is valued with unstableService  the instance name in application yaml file.
@@ -265,7 +266,8 @@ public class UnstableClient {
 
 }
 ```
-below a simple controller for the two clients
+
+below a simple controller using the two clients
 
 ```java
 
@@ -294,12 +296,11 @@ public class ConsumerController {
 
 we will start the producer  
 
-Using your favorite IDE you can import the project and start it,
+using your favorite IDE you can import the project and start it,
 
-the producer app will run on port 8081
-and the retry-consumer on 8082
+the producer app will run on port 8081 and the retry-consumer on 8082
 
-or use the following commands
+Or use the following commands
 
 ```bash
 java -jar producer/target/producer-0.0.1-SNAPSHOT.jar
@@ -356,7 +357,7 @@ Failed requests:        36
 Non-2xx responses:      36
 
 ```
-the apache bench shows that 36 request has failed the error propagated from producer api to non protected client causing it tto fail each time the produced has failed.
+the apache bench shows that 36 requestS has failed, the error propagated from producer api to non protected client causing it to fail each time the produced has failed.
 
 let's now use the protected endpoint 
 
@@ -373,13 +374,13 @@ Failed requests:        0
 
 ```
 
-It's clear that the error did not propagate to our consumer the retry pattern protected our system from cascading failures.
+It's clear that the error did not propagate to our consumer, the retry pattern protected our system from cascading failures.
 
 
 ## Conclusion : 
 
 in this article we learned about transient failure, we learned basic configuration options for retry pattern and we demonstrated how this pattern prevent from cascading failure.
-In the next article we will lezrn about another type of resiliency pattern wih is the Bulkhead.
+in the next article we will lezrn about another type of resiliency pattern wish is the Bulkhead.
 
 <!-- CONTACT -->
 ## Contact
